@@ -134,11 +134,11 @@
                                 <i data-lucide="send" class="w-5 h-5 text-rose-400"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-white">Official  Channel</p>
+                                <p class="text-xs font-bold text-white">Official Channel</p>
                                 <p id="status-group" class="text-[9px] text-slate-400">Bonus: ৳70.00</p>
                             </div>
                         </div>
-                        <button id="btn-group" onclick="handleJoinTask('group', 'https://t.me/fullcashmoney')" class="neon-border-btn px-4 py-2 text-[10px] uppercase text-white">Claim</button>
+                        <button id="btn-group" onclick="handleJoinTask('group', 'https://t.me/fullcashmoney')" class="neon-border-btn px-4 py-2 text-[10px] uppercase text-white">Visit</button>
                     </div>
 
                     <div class="action-card p-3.5 flex justify-between items-center">
@@ -147,11 +147,11 @@
                                 <i data-lucide="check-check" class="w-5 h-5 text-amber-400"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-white"> Payment Proof Channel</p>
+                                <p class="text-xs font-bold text-white">Payment Proof Channel</p>
                                 <p id="status-pay" class="text-[9px] text-slate-400">Bonus: ৳70.00</p>
                             </div>
                         </div>
-                        <button id="btn-pay" onclick="handleJoinTask('pay', 'https://t.me/fullcashmoney1')" class="neon-border-btn px-4 py-2 text-[10px] uppercase text-white">Claim</button>
+                        <button id="btn-pay" onclick="handleJoinTask('pay', 'https://t.me/fullcashmoney1')" class="neon-border-btn px-4 py-2 text-[10px] uppercase text-white">Visit</button>
                     </div>
 
                     <div class="action-card p-3.5 flex justify-between items-center">
@@ -160,7 +160,7 @@
                                 <i data-lucide="tv" class="w-5 h-5 text-indigo-400"></i>
                             </div>
                             <div>
-                                <p class="text-xs font-bold text-white">Sponsor Link </p>
+                                <p class="text-xs font-bold text-white">Sponsor Link</p>
                                 <p id="status-v1" class="text-[9px] text-slate-400">Bonus: ৳70.00</p>
                             </div>
                         </div>
@@ -213,7 +213,7 @@
             <div class="space-y-3 pt-4">
                 <div class="flex items-center gap-2 pl-1 mb-2">
                     <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live  Withdraw </h3>
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Withdraw</h3>
                 </div>
                 <div id="live-payouts-box" class="space-y-2 relative overflow-hidden">
                 </div>
@@ -223,7 +223,7 @@
         <!-- Cashout & History Page -->
         <div id="wallet-page" class="page-content hidden space-y-5">
             <div class="action-card p-6 space-y-4 border-rose-500/20">
-                <h3 class="text-center text-xs font-black uppercase tracking-widest text-rose-400">Cashout Method </h3>
+                <h3 class="text-center text-xs font-black uppercase tracking-widest text-rose-400">Cashout Method</h3>
                 <div class="space-y-3">
                     <select id="gateway" class="w-full bg-slate-900/80 p-3.5 rounded-xl text-xs text-white border border-white/10 outline-none">
                         <option value="Bkash">বিকাশ (Bkash)</option>
@@ -400,6 +400,7 @@
             
             const bonusList = userData.joinedBonus || [];
             
+            // বাটনসমূহ লক হবে না, তবে স্টেট স্ট্যাটাসে 'Claimed' দেখানো থাকবে
             if(bonusList.includes('group')) updateBtnState('group');
             if(bonusList.includes('pay')) updateBtnState('pay');
             if(bonusList.includes('v1')) updateBtnState('v1');
@@ -407,14 +408,9 @@
         }
 
         function updateBtnState(id) {
-            const btn = document.getElementById(`btn-${id}`);
             const status = document.getElementById(`status-${id}`);
-            if(btn && status) {
+            if(status) {
                 status.innerText = "Status: Claimed ✅";
-                btn.innerText = "Claimed";
-                btn.disabled = true;
-                btn.classList.remove('neon-border-btn');
-                btn.classList.add('bg-slate-800');
             }
         }
 
@@ -495,24 +491,25 @@
             }, 1000);
         };
 
+        // Instant Task: যতবার ইচ্ছে ভিজিট হবে, কিন্তু পুরস্কার শুধু ১ম বার দেবে
         window.handleJoinTask = async (type, link) => {
-            const bonusList = userData.joinedBonus || [];
-            if (bonusList.includes(type)) return;
-
             if(link.includes('t.me')) tg.openTelegramLink(link);
             else tg.openLink(link);
 
-            setTimeout(async () => {
-                const updatedBonus = userData.joinedBonus || [];
-                if(!updatedBonus.includes(type)) {
-                    updatedBonus.push(type);
-                    await updateDoc(doc(db, "users", uid), {
-                        balance: increment(70),
-                        joinedBonus: updatedBonus
-                    });
-                    tg.showAlert("বোনাস ৳৭০.০০ যোগ হয়েছে!");
-                }
-            }, 4000); 
+            const bonusList = userData.joinedBonus || [];
+            if (!bonusList.includes(type)) {
+                setTimeout(async () => {
+                    const updatedBonus = userData.joinedBonus || [];
+                    if(!updatedBonus.includes(type)) {
+                        updatedBonus.push(type);
+                        await updateDoc(doc(db, "users", uid), {
+                            balance: increment(70),
+                            joinedBonus: updatedBonus
+                        });
+                        tg.showAlert("বোনাস ৳৭০.০০ যোগ হয়েছে!");
+                    }
+                }, 4000); 
+            }
         };
 
         window.showSingleAdSlot = async () => {
@@ -733,4 +730,4 @@
         init();
     </script>
 </body>
-                    </html>
+</html>
