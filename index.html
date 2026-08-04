@@ -320,7 +320,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, onSnapshot, setDoc, updateDoc, increment, collection, addDoc, query, where, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, onSnapshot, setDoc, updateDoc, increment, collection, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAf4t5IThVzcRZUOrBs6ZR3k3xxebBlfHM",
@@ -400,7 +400,6 @@
             
             const bonusList = userData.joinedBonus || [];
             
-            // বাটনসমূহ লক হবে না, তবে স্টেট স্ট্যাটাসে 'Claimed' দেখানো থাকবে
             if(bonusList.includes('group')) updateBtnState('group');
             if(bonusList.includes('pay')) updateBtnState('pay');
             if(bonusList.includes('v1')) updateBtnState('v1');
@@ -491,7 +490,6 @@
             }, 1000);
         };
 
-        // Instant Task: যতবার ইচ্ছে ভিজিট হবে, কিন্তু পুরস্কার শুধু ১ম বার দেবে
         window.handleJoinTask = async (type, link) => {
             if(link.includes('t.me')) tg.openTelegramLink(link);
             else tg.openLink(link);
@@ -587,12 +585,11 @@
             document.getElementById('num').value = '';
         };
 
-        // Real User-specific Withdrawal History
+        // Real User-specific Withdrawal History (Fixed without Composite Index)
         function loadHistory() {
             const q = query(
                 collection(db, "withdrawals"), 
-                where("uid", "==", uid), 
-                orderBy("time", "desc")
+                where("uid", "==", uid)
             );
 
             onSnapshot(q, (sn) => {
@@ -604,9 +601,12 @@
                     return;
                 }
 
+                let docs = [];
+                sn.forEach(d => docs.push(d.data()));
+                docs.sort((a, b) => (b.time?.seconds || 0) - (a.time?.seconds || 0));
+
                 let html = '';
-                sn.forEach(d => {
-                    const w = d.data();
+                docs.forEach(w => {
                     let statusColor = "text-amber-400"; 
                     let statusBadge = "bg-amber-500/10 border-amber-500/20";
 
@@ -627,7 +627,7 @@
                             </div>
                             <div>
                                 <span class="px-2 py-0.5 rounded-full text-[8px] font-black border ${statusBadge} ${statusColor}">
-                                    ${w.status.toUpperCase()}
+                                    ${w.status ? w.status.toUpperCase() : 'PENDING'}
                                 </span>
                             </div>
                         </div>
@@ -730,4 +730,4 @@
         init();
     </script>
 </body>
-</html>
+    </html>
