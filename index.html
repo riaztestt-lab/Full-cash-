@@ -75,6 +75,14 @@
         .nav-link.active i {
             filter: drop-shadow(0 0 8px var(--primary));
         }
+
+        @keyframes slideDownIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-payout {
+            animation: slideDownIn 0.5s ease forwards;
+        }
     </style>
 </head>
 <body class="pb-32">
@@ -174,7 +182,7 @@
                 </div>
             </div>
 
-            <!-- Single Wide Long Booster Slot (২০টি অ্যাড সেকশন) -->
+            <!-- Single Wide Booster Slot -->
             <div class="space-y-3">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Daily Super Booster</h3>
                 <div class="action-card p-5 border-rose-500/30 flex flex-col items-center text-center space-y-3">
@@ -195,14 +203,24 @@
                 </div>
             </div>
 
-            <!-- Web Links Section (5 Daily Tasks) -->
+            <!-- Web Links Section -->
             <div class="space-y-3">
                 <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Daily Missions (5 Tasks)</h3>
                 <div id="main-tasks" class="space-y-2.5"></div>
             </div>
+
+            <!-- Random Live Withdrawals History -->
+            <div class="space-y-3 pt-4">
+                <div class="flex items-center gap-2 pl-1 mb-2">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Live Global Payouts</h3>
+                </div>
+                <div id="live-payouts-box" class="space-y-2 relative overflow-hidden">
+                </div>
+            </div>
         </div>
 
-        <!-- Cashout Page -->
+        <!-- Cashout & History Page -->
         <div id="wallet-page" class="page-content hidden space-y-5">
             <div class="action-card p-6 space-y-4 border-rose-500/20">
                 <h3 class="text-center text-xs font-black uppercase tracking-widest text-rose-400">Cashout Gateway</h3>
@@ -217,7 +235,14 @@
                 </div>
             </div>
             
-            <div id="txn-history" class="space-y-2"></div>
+            <!-- User Real Withdrawal History Box -->
+            <div class="space-y-2 mt-6">
+                <div class="flex items-center justify-between px-1">
+                    <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Your Cashout History</h4>
+                    <i data-lucide="history" class="w-3.5 h-3.5 text-slate-400"></i>
+                </div>
+                <div id="txn-history" class="space-y-2"></div>
+            </div>
         </div>
 
         <!-- Referral Page -->
@@ -285,7 +310,7 @@
 
     </main>
 
-    <!-- Navigation Bar -->
+    <!-- Bottom Navigation Bar -->
     <nav class="fixed bottom-0 left-0 right-0 bottom-nav px-6 py-3.5 flex justify-around items-center z-50">
         <button onclick="changePage('home-page', this)" class="nav-link active flex flex-col items-center gap-1 text-slate-400"><i data-lucide="layout-grid" class="w-5 h-5"></i><span class="text-[8px] font-bold">Home</span></button>
         <button onclick="changePage('refer-page', this)" class="nav-link flex flex-col items-center gap-1 text-slate-400"><i data-lucide="share-2" class="w-5 h-5"></i><span class="text-[8px] font-bold">Refer</span></button>
@@ -313,7 +338,7 @@
 
         let userData = null;
         let adCooldown = false;
-        let activeTimers = {}; // রানিং টাইমার ট্র্যাক করার জন্য
+        let activeTimers = {}; 
         const uid = tg.initDataUnsafe?.user?.id?.toString() || "dev_user";
 
         async function init() {
@@ -352,6 +377,7 @@
             });
 
             loadHistory();
+            startFakeLivePayouts();
         }
 
         function updateUI() {
@@ -372,36 +398,23 @@
             document.getElementById('profile-ref-count').innerText = refCount;
             document.getElementById('stat-earn').innerText = "৳" + (refCount * 100);
             
-            // ইনস্ট্যান্ট টাস্কগুলোর আপডেট স্টেট (একক array তে ৪টি টাস্ক ধরা হয়েছে)
             const bonusList = userData.joinedBonus || [];
             
-            if(bonusList.includes('group')) {
-                document.getElementById('status-group').innerText = "Status: Claimed ✅";
-                document.getElementById('btn-group').innerText = "Claimed";
-                document.getElementById('btn-group').disabled = true;
-                document.getElementById('btn-group').classList.remove('neon-border-btn');
-                document.getElementById('btn-group').classList.add('bg-slate-800');
-            }
-            if(bonusList.includes('pay')) {
-                document.getElementById('status-pay').innerText = "Status: Claimed ✅";
-                document.getElementById('btn-pay').innerText = "Claimed";
-                document.getElementById('btn-pay').disabled = true;
-                document.getElementById('btn-pay').classList.remove('neon-border-btn');
-                document.getElementById('btn-pay').classList.add('bg-slate-800');
-            }
-            if(bonusList.includes('v1')) {
-                document.getElementById('status-v1').innerText = "Status: Claimed ✅";
-                document.getElementById('btn-v1').innerText = "Claimed";
-                document.getElementById('btn-v1').disabled = true;
-                document.getElementById('btn-v1').classList.remove('neon-border-btn');
-                document.getElementById('btn-v1').classList.add('bg-slate-800');
-            }
-            if(bonusList.includes('v2')) {
-                document.getElementById('status-v2').innerText = "Status: Claimed ✅";
-                document.getElementById('btn-v2').innerText = "Claimed";
-                document.getElementById('btn-v2').disabled = true;
-                document.getElementById('btn-v2').classList.remove('neon-border-btn');
-                document.getElementById('btn-v2').classList.add('bg-slate-800');
+            if(bonusList.includes('group')) updateBtnState('group');
+            if(bonusList.includes('pay')) updateBtnState('pay');
+            if(bonusList.includes('v1')) updateBtnState('v1');
+            if(bonusList.includes('v2')) updateBtnState('v2');
+        }
+
+        function updateBtnState(id) {
+            const btn = document.getElementById(`btn-${id}`);
+            const status = document.getElementById(`status-${id}`);
+            if(btn && status) {
+                status.innerText = "Status: Claimed ✅";
+                btn.innerText = "Claimed";
+                btn.disabled = true;
+                btn.classList.remove('neon-border-btn');
+                btn.classList.add('bg-slate-800');
             }
         }
 
@@ -441,20 +454,15 @@
             lucide.createIcons();
         };
 
-        // সময়-ভিত্তিক নিখুঁত ৩০ সেকেন্ডের টাইমার লজিক
         window.handleTask = (id, link) => {
             const today = new Date().toDateString();
             const completedTasks = userData.lastDate === today ? (userData.tasksDone || []) : [];
             if (completedTasks.includes(id)) return;
 
-            // লিংক ওপেন করা
-            if(link.includes('t.me')) {
-                tg.openTelegramLink(link);
-            } else {
-                tg.openLink(link);
-            }
+            if(link.includes('t.me')) tg.openTelegramLink(link);
+            else tg.openLink(link);
 
-            const endTime = Date.now() + 30000; // ৩০ সেকেন্ডের সময় নির্ধারণ
+            const endTime = Date.now() + 30000;
             activeTimers[id] = 30;
 
             const timer = setInterval(async () => {
@@ -487,18 +495,13 @@
             }, 1000);
         };
 
-        // ইনস্ট্যান্ট টাস্কগুলোর সঠিক হ্যান্ডলার
         window.handleJoinTask = async (type, link) => {
             const bonusList = userData.joinedBonus || [];
             if (bonusList.includes(type)) return;
 
-            if(link.includes('t.me')) {
-                tg.openTelegramLink(link);
-            } else {
-                tg.openLink(link);
-            }
+            if(link.includes('t.me')) tg.openTelegramLink(link);
+            else tg.openLink(link);
 
-            // ৪ সেকেন্ড পর বোনাস ক্লেম
             setTimeout(async () => {
                 const updatedBonus = userData.joinedBonus || [];
                 if(!updatedBonus.includes(type)) {
@@ -513,19 +516,13 @@
         };
 
         window.showSingleAdSlot = async () => {
-            if (adCooldown) {
-                tg.showAlert("পরবর্তী অ্যাড দেখতে ৩০ সেকেন্ড অপেক্ষা করুন!");
-                return;
-            }
+            if (adCooldown) return tg.showAlert("পরবর্তী অ্যাড দেখতে ৩০ সেকেন্ড অপেক্ষা করুন!");
 
             const today = new Date().toDateString();
             const isNewDay = userData.lastDate !== today;
             const currentCount = isNewDay ? 0 : (userData.singleAdCount || 0);
 
-            if (currentCount >= 20) {
-                tg.showAlert(`আজকের ২০টি অ্যাড দেখা শেষ! আগামী কাল আবার দেখতে পারবেন।`);
-                return;
-            }
+            if (currentCount >= 20) return tg.showAlert(`আজকের ২০টি অ্যাড দেখা শেষ! আগামী কাল আবার দেখতে পারবেন।`);
 
             if (typeof show_11501929 === 'function') {
                 show_11501929().then(async () => {
@@ -534,7 +531,6 @@
                     if(isNewDay) updateObj.tasksDone = []; 
                     await updateDoc(doc(db, "users", uid), updateObj);
                     tg.HapticFeedback.notificationOccurred('success');
-                    
                     startAdCooldown(30);
                 }).catch(err => tg.showAlert("Ad failed."));
             } else { tg.showAlert("Ad Loading..."); }
@@ -550,7 +546,6 @@
             }
 
             const endTime = Date.now() + (seconds * 1000);
-
             const interval = setInterval(() => {
                 const remaining = Math.ceil((endTime - Date.now()) / 1000);
                 if (btn) btn.innerText = `PLEASE WAIT (${remaining}S)`;
@@ -568,6 +563,7 @@
             }, 1000);
         }
 
+        // Cashout Submission
         window.submitWithdraw = async () => {
             const amt = parseFloat(document.getElementById('amt').value);
             const num = document.getElementById('num').value;
@@ -576,21 +572,142 @@
             if(!amt || !num) return tg.showAlert("সবগুলো ফিল্ড পুরন করুন।");
             if(amt < 500) return tg.showAlert("মিনিমাম ৫০০ টাকা প্রয়োজন।");
             if(amt > userData.balance) return tg.showAlert("পর্যাপ্ত ব্যালেন্স নেই।");
-
-            if(refCount < 15) {
-                return tg.showAlert(`উইথড্র সফল করতে অন্তত ১৫টি রেফার প্রয়োজন! আপনার বর্তমান রেফার: ${refCount}/15`);
-            }
+            if(refCount < 15) return tg.showAlert(`উইথড্র সফল করতে অন্তত ১৫টি রেফার প্রয়োজন! আপনার বর্তমান রেফার: ${refCount}/15`);
             
+            // Balance deduct and add entry to DB
             await updateDoc(doc(db, "users", uid), { balance: increment(-amt) });
             await addDoc(collection(db, "withdrawals"), { 
-                uid, amount: amt, number: num, 
+                uid, 
+                amount: amt, 
+                number: num, 
                 method: document.getElementById('gateway').value, 
                 status: "Pending", 
                 time: serverTimestamp() 
             });
+
             tg.showAlert("উইথড্র রিকোয়েস্ট জমা হয়েছে!");
             document.getElementById('amt').value = '';
             document.getElementById('num').value = '';
+        };
+
+        // Real User-specific Withdrawal History
+        function loadHistory() {
+            const q = query(
+                collection(db, "withdrawals"), 
+                where("uid", "==", uid), 
+                orderBy("time", "desc")
+            );
+
+            onSnapshot(q, (sn) => {
+                const box = document.getElementById('txn-history');
+                if (!box) return;
+
+                if (sn.empty) {
+                    box.innerHTML = '<p class="text-center text-[10px] text-slate-500 py-3">এখনো কোনো ক্যাশআউট করা হয়নি।</p>';
+                    return;
+                }
+
+                let html = '';
+                sn.forEach(d => {
+                    const w = d.data();
+                    let statusColor = "text-amber-400"; 
+                    let statusBadge = "bg-amber-500/10 border-amber-500/20";
+
+                    if (w.status === 'Approved') {
+                        statusColor = "text-emerald-400";
+                        statusBadge = "bg-emerald-500/10 border-emerald-500/20";
+                    } else if (w.status === 'Rejected') {
+                        statusColor = "text-rose-500";
+                        statusBadge = "bg-rose-500/10 border-rose-500/20";
+                    }
+
+                    html += `
+                    <div class="action-card p-3.5 flex justify-between items-center">
+                        <div class="space-y-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-black text-white text-xs uppercase">${w.method}</span>
+                                <span class="text-[9px] font-mono text-slate-400">(${w.number})</span>
+                            </div>
+                            <div>
+                                <span class="px-2 py-0.5 rounded-full text-[8px] font-black border ${statusBadge} ${statusColor}">
+                                    ${w.status.toUpperCase()}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs font-black text-rose-400">৳${parseFloat(w.amount).toFixed(2)}</p>
+                        </div>
+                    </div>`;
+                });
+                box.innerHTML = html;
+            });
+        }
+
+        // Random Live Global Payout History (Home Page)
+        function startFakeLivePayouts() {
+            const box = document.getElementById('live-payouts-box');
+            if(!box) return;
+
+            const methods = ['Bkash', 'Nagad'];
+            const prefixes = ['017', '019', '018', '016', '013', '015'];
+
+            function generateRandomPayout() {
+                const method = methods[Math.floor(Math.random() * methods.length)];
+                const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+                const hiddenNum = prefix + '****' + Math.floor(1000 + Math.random() * 9000);
+                const amount = (Math.floor(Math.random() * 15) + 5) * 100;
+                const timeSpan = Math.floor(Math.random() * 59) + 1;
+
+                return `
+                <div class="action-card p-3 flex justify-between items-center bg-emerald-500/5 border-emerald-500/20 animate-payout mb-2">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-emerald-500/10 rounded-lg">
+                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+                        </div>
+                        <div>
+                            <p class="text-[10px] font-bold text-white">${method} <span class="text-slate-400 font-mono">(${hiddenNum})</span></p>
+                            <p class="text-[8px] text-slate-500">${timeSpan} sec ago</p>
+                        </div>
+                    </div>
+                    <p class="text-xs font-black text-emerald-400">৳${amount}.00</p>
+                </div>
+                `;
+            }
+
+            let html = '';
+            for(let i=0; i<3; i++) html += generateRandomPayout();
+            box.innerHTML = html;
+            lucide.createIcons();
+
+            setInterval(() => {
+                box.insertAdjacentHTML('afterbegin', generateRandomPayout());
+                if(box.children.length > 3) {
+                    box.lastElementChild.remove();
+                }
+                lucide.createIcons();
+            }, 4000);
+        }
+
+        // Admin approval logic
+        window.approveWithdraw = async (withdrawId) => {
+            try {
+                await updateDoc(doc(db, "withdrawals", withdrawId), {
+                    status: "Approved", updatedAt: serverTimestamp()
+                });
+                tg.showAlert("Approved successfully!");
+            } catch (error) { tg.showAlert("Error: " + error.message); }
+        };
+
+        window.rejectWithdraw = async (withdrawId, userUid, amount) => {
+            try {
+                await updateDoc(doc(db, "withdrawals", withdrawId), {
+                    status: "Rejected", updatedAt: serverTimestamp()
+                });
+                await updateDoc(doc(db, "users", userUid), {
+                    balance: increment(amount)
+                });
+                tg.showAlert("Rejected & Refunded!");
+            } catch (error) { tg.showAlert("Error: " + error.message); }
         };
 
         window.changePage = (id, btn) => {
@@ -613,24 +730,6 @@
             tg.showAlert("রেফারেল লিঙ্ক কপি হয়েছে!");
         }
 
-        function loadHistory() {
-            const q = query(collection(db, "withdrawals"), where("uid", "==", uid), orderBy("time", "desc"));
-            onSnapshot(q, (sn) => {
-                const box = document.getElementById('txn-history');
-                box.innerHTML = sn.empty ? '<p class="text-center text-[9px] text-slate-500 py-2">No history found.</p>' : '';
-                sn.forEach(d => {
-                    const w = d.data();
-                    box.innerHTML += `
-                    <div class="action-card p-3 flex justify-between items-center opacity-80 mb-2">
-                        <div class="text-[9px]">
-                            <p class="font-extrabold text-white uppercase">${w.method}</p>
-                            <p class="${w.status === 'Pending' ? 'text-amber-400' : 'text-emerald-400'} font-bold">${w.status}</p>
-                        </div>
-                        <p class="text-xs font-black text-rose-400">৳${w.amount}</p>
-                    </div>`;
-                });
-            });
-        }
         init();
     </script>
 </body>
