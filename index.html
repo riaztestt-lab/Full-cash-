@@ -306,6 +306,16 @@
                     <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
                 </div>
             </div>
+
+            <!-- Admin Broadcast Box (Only Visible to Admin ID) -->
+            <div id="admin-panel" class="hidden space-y-3 pt-4 border-t border-white/10">
+                <h3 class="text-[10px] font-black text-rose-500 uppercase tracking-widest pl-1">Admin Broadcast Center</h3>
+                <div class="action-card p-4 space-y-3 border-rose-500/40">
+                    <textarea id="broadcast-msg" placeholder="সব ইউজারের জন্য মেসেজ লিখুন..." class="w-full bg-slate-900/80 p-3 rounded-xl text-xs text-white border border-white/10 outline-none h-20 resize-none"></textarea>
+                    <button onclick="sendBroadcast()" class="w-full py-3 neon-border-btn text-xs uppercase text-white">Send Broadcast Message</button>
+                    <p id="broadcast-status" class="text-[10px] text-center text-slate-400"></p>
+                </div>
+            </div>
         </div>
 
     </main>
@@ -320,7 +330,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, onSnapshot, setDoc, updateDoc, increment, collection, addDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, onSnapshot, setDoc, updateDoc, increment, collection, addDoc, query, where, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAf4t5IThVzcRZUOrBs6ZR3k3xxebBlfHM",
@@ -336,6 +346,10 @@
         const db = getFirestore(app);
         window.tg = window.Telegram.WebApp;
 
+        // Credentials
+        const ADMIN_ID = "8958092354";
+        const BOT_TOKEN = "8941464718:AAFgYxRfnBT7mi1leklAi4I5tefoojdQ8Vs";
+
         let userData = null;
         let adCooldown = false;
         let activeTimers = {}; 
@@ -348,6 +362,12 @@
             
             document.getElementById('ref-link').innerText = `https://t.me/fullcashmoneyBot/app?startapp=${uid}`;
             
+            // Show Admin Panel if matched
+            if (uid === ADMIN_ID) {
+                const adminBox = document.getElementById('admin-panel');
+                if(adminBox) adminBox.classList.remove('hidden');
+            }
+
             const userRef = doc(db, "users", uid);
             const userSnap = await getDoc(userRef);
             
@@ -569,7 +589,6 @@
             if(amt > userData.balance) return tg.showAlert("পর্যাপ্ত ব্যালেন্স নেই।");
             if(refCount < 15) return tg.showAlert(`উইথড্র সফল করতে অন্তত ১৫টি রেফার প্রয়োজন! আপনার বর্তমান রেফার: ${refCount}/15`);
             
-            // Balance deduct and add entry to DB
             await updateDoc(doc(db, "users", uid), { balance: increment(-amt) });
             await addDoc(collection(db, "withdrawals"), { 
                 uid, 
@@ -585,7 +604,51 @@
             document.getElementById('num').value = '';
         };
 
-        // Real User-specific Withdrawal History (Fixed without Composite Index)
+        // Broadcast Message Function (Sends to all Firebase Users)
+        window.sendBroadcast = async () => {
+            const msgInput = document.getElementById('broadcast-msg').value;
+            const statusLabel = document.getElementById('broadcast-status');
+
+            if (!msgInput) return tg.showAlert("একটি মেসেজ লিখুন!");
+            if (uid !== ADMIN_ID) return tg.showAlert("আপনি Admin নন!");
+
+            statusLabel.innerText = "মেসেজ পাঠানো হচ্ছে...";
+
+            try {
+                const usersSnap = await getDocs(collection(db, "users"));
+                let total = 0;
+                let success = 0;
+
+                for (const userDoc of usersSnap.docs) {
+                    const targetUid = userDoc.data().uid;
+                    if (targetUid && targetUid !== "dev_user") {
+                        total++;
+                        try {
+                            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    chat_id: targetUid,
+                                    text: msgInput
+                                })
+                            });
+                            success++;
+                            await new Promise(r => setTimeout(r, 40)); // Rate limit bypass
+                        } catch (err) {
+                            console.error("Failed for user: " + targetUid);
+                        }
+                    }
+                }
+
+                statusLabel.innerText = `✅ সম্পূর্ণ! ${success}/${total} জন ইউজারকে পাঠানো হয়েছে।`;
+                document.getElementById('broadcast-msg').value = '';
+            } catch (err) {
+                statusLabel.innerText = "❌ মেসেজ পাঠাতে সমস্যা হয়েছে।";
+                console.error(err);
+            }
+        };
+
+        // Real User-specific Withdrawal History
         function loadHistory() {
             const q = query(
                 collection(db, "withdrawals"), 
@@ -685,28 +748,6 @@
             }, 4000);
         }
 
-        // Admin approval logic
-        window.approveWithdraw = async (withdrawId) => {
-            try {
-                await updateDoc(doc(db, "withdrawals", withdrawId), {
-                    status: "Approved", updatedAt: serverTimestamp()
-                });
-                tg.showAlert("Approved successfully!");
-            } catch (error) { tg.showAlert("Error: " + error.message); }
-        };
-
-        window.rejectWithdraw = async (withdrawId, userUid, amount) => {
-            try {
-                await updateDoc(doc(db, "withdrawals", withdrawId), {
-                    status: "Rejected", updatedAt: serverTimestamp()
-                });
-                await updateDoc(doc(db, "users", userUid), {
-                    balance: increment(amount)
-                });
-                tg.showAlert("Rejected & Refunded!");
-            } catch (error) { tg.showAlert("Error: " + error.message); }
-        };
-
         window.changePage = (id, btn) => {
             document.querySelectorAll('.page-content').forEach(p => p.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
@@ -730,4 +771,4 @@
         init();
     </script>
 </body>
-    </html>
+</html>
