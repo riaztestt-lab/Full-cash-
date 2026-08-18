@@ -307,13 +307,14 @@
                 </div>
             </div>
 
-            <!-- Admin Broadcast Box (Only Visible to Admin ID) -->
-            <div id="admin-panel" class="hidden space-y-3 pt-4 border-t border-white/10">
+            <!-- Admin Broadcast Center Section -->
+            <div id="admin-panel" class="space-y-3 pt-4 border-t border-white/10">
                 <h3 class="text-[10px] font-black text-rose-500 uppercase tracking-widest pl-1">Admin Broadcast Center</h3>
                 <div class="action-card p-4 space-y-3 border-rose-500/40">
-                    <textarea id="broadcast-msg" placeholder="সব ইউজারের জন্য মেসেজ লিখুন..." class="w-full bg-slate-900/80 p-3 rounded-xl text-xs text-white border border-white/10 outline-none h-20 resize-none"></textarea>
+                    <input id="broadcast-img" type="url" placeholder="ছবির Direct URL (যেমন: ImgBB/PostImage লিংক)" class="w-full bg-slate-900/80 p-3 rounded-xl text-xs text-white border border-white/10 outline-none">
+                    <textarea id="broadcast-msg" placeholder="সব ইউজারের জন্য মেসেজ ক্যাপশন লিখুন..." class="w-full bg-slate-900/80 p-3 rounded-xl text-xs text-white border border-white/10 outline-none h-20 resize-none"></textarea>
                     <button onclick="sendBroadcast()" class="w-full py-3 neon-border-btn text-xs uppercase text-white">Send Broadcast Message</button>
-                    <p id="broadcast-status" class="text-[10px] text-center text-slate-400"></p>
+                    <p id="broadcast-status" class="text-[10px] text-center text-slate-400 font-medium"></p>
                 </div>
             </div>
         </div>
@@ -346,7 +347,7 @@
         const db = getFirestore(app);
         window.tg = window.Telegram.WebApp;
 
-        // Credentials
+        // BIND CREDENTIALS
         const ADMIN_ID = "8958092354";
         const BOT_TOKEN = "8941464718:AAFgYxRfnBT7mi1leklAi4I5tefoojdQ8Vs";
 
@@ -362,12 +363,6 @@
             
             document.getElementById('ref-link').innerText = `https://t.me/fullcashmoneyBot/app?startapp=${uid}`;
             
-            // Show Admin Panel if matched
-            if (uid === ADMIN_ID) {
-                const adminBox = document.getElementById('admin-panel');
-                if(adminBox) adminBox.classList.remove('hidden');
-            }
-
             const userRef = doc(db, "users", uid);
             const userSnap = await getDoc(userRef);
             
@@ -604,13 +599,13 @@
             document.getElementById('num').value = '';
         };
 
-        // Broadcast Message Function (Sends to all Firebase Users)
+        // Broadcast Message Function (Photo/Text Support)
         window.sendBroadcast = async () => {
-            const msgInput = document.getElementById('broadcast-msg').value;
+            const imageUrl = document.getElementById('broadcast-img').value.trim();
+            const msgInput = document.getElementById('broadcast-msg').value.trim();
             const statusLabel = document.getElementById('broadcast-status');
 
-            if (!msgInput) return tg.showAlert("একটি মেসেজ লিখুন!");
-            if (uid !== ADMIN_ID) return tg.showAlert("আপনি Admin নন!");
+            if (!msgInput && !imageUrl) return tg.showAlert("মেসেজ অথবা ছবির লিংক দিন!");
 
             statusLabel.innerText = "মেসেজ পাঠানো হচ্ছে...";
 
@@ -619,36 +614,45 @@
                 let total = 0;
                 let success = 0;
 
+                const apiMethod = imageUrl ? "sendPhoto" : "sendMessage";
+
                 for (const userDoc of usersSnap.docs) {
                     const targetUid = userDoc.data().uid;
                     if (targetUid && targetUid !== "dev_user") {
                         total++;
+                        
+                        const payload = { chat_id: targetUid };
+                        if (imageUrl) {
+                            payload.photo = imageUrl;
+                            payload.caption = msgInput;
+                        } else {
+                            payload.text = msgInput;
+                        }
+
                         try {
-                            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                            await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/${apiMethod}`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    chat_id: targetUid,
-                                    text: msgInput
-                                })
+                                body: JSON.stringify(payload)
                             });
                             success++;
-                            await new Promise(r => setTimeout(r, 40)); // Rate limit bypass
+                            await new Promise(r => setTimeout(r, 40)); 
                         } catch (err) {
                             console.error("Failed for user: " + targetUid);
                         }
                     }
                 }
 
-                statusLabel.innerText = `✅ সম্পূর্ণ! ${success}/${total} জন ইউজারকে পাঠানো হয়েছে।`;
+                statusLabel.innerText = `✅ সম্পূর্ণ! ${success}/${total} জন ইউজারকে মেসেজ পাঠানো হয়েছে।`;
                 document.getElementById('broadcast-msg').value = '';
+                document.getElementById('broadcast-img').value = '';
             } catch (err) {
                 statusLabel.innerText = "❌ মেসেজ পাঠাতে সমস্যা হয়েছে।";
                 console.error(err);
             }
         };
 
-        // Real User-specific Withdrawal History
+        // Real Withdrawal History
         function loadHistory() {
             const q = query(
                 collection(db, "withdrawals"), 
@@ -703,7 +707,7 @@
             });
         }
 
-        // Random Live Global Payout History (Home Page)
+        // Random Live Payout History
         function startFakeLivePayouts() {
             const box = document.getElementById('live-payouts-box');
             if(!box) return;
