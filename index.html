@@ -3,13 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Full Cash Money - Ultimate Wallet</title>
+    <title>Full Cash Money</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <!-- Monetag SDK Script -->
     <script src='//libtl.com/sdk.js' data-zone='11501929' data-sdk='show_11501929'></script>
     <style>
+        /* ===== COLORFUL PREMIUM UI ===== */
+        :root {
+            --primary: #ff2d75;
+            --secondary: #ff9f1c;
+            --cyan: #00e5ff;
+            --purple: #9b5cff;
+            --green: #00e676;
+            --blue: #4d7cff;
+            --card-bg: rgba(19, 24, 38, 0.78);
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 10% 5%, rgba(255,45,117,.20), transparent 30%),
+                radial-gradient(circle at 90% 20%, rgba(0,229,255,.16), transparent 28%),
+                radial-gradient(circle at 50% 100%, rgba(155,92,255,.16), transparent 35%),
+                #070910;
+        }
+
+        .hero-wallet-card {
+            background:
+                linear-gradient(135deg, rgba(255,45,117,.25), rgba(155,92,255,.18) 45%, rgba(0,229,255,.14)),
+                linear-gradient(135deg, #171c2d, #0b101d);
+            border: 1px solid rgba(255,255,255,.13);
+            box-shadow:
+                0 20px 45px rgba(0,0,0,.55),
+                0 0 35px rgba(255,45,117,.10),
+                inset 0 1px 0 rgba(255,255,255,.12);
+            overflow: hidden;
+        }
+
+        .hero-wallet-card::before {
+            content: "";
+            position: absolute;
+            width: 170px;
+            height: 170px;
+            right: -60px;
+            top: -70px;
+            background: radial-gradient(circle, rgba(0,229,255,.35), transparent 65%);
+            pointer-events: none;
+        }
+
+        .action-card {
+            background:
+                linear-gradient(145deg, rgba(255,255,255,.065), rgba(255,255,255,.025)),
+                var(--card-bg);
+            border: 1px solid rgba(255,255,255,.08);
+            box-shadow: 0 10px 25px rgba(0,0,0,.18);
+        }
+
+        .action-card:hover {
+            border-color: rgba(0,229,255,.35);
+            box-shadow: 0 12px 28px rgba(0,0,0,.28), 0 0 18px rgba(0,229,255,.08);
+        }
+
+        .neon-border-btn {
+            background: linear-gradient(110deg, #ff176f 0%, #ff7a18 42%, #9b5cff 72%, #00cfff 100%);
+            background-size: 220% 220%;
+            animation: gradientMove 4s ease infinite;
+            box-shadow:
+                0 8px 22px rgba(255,45,117,.28),
+                0 0 14px rgba(155,92,255,.18);
+        }
+
+        .neon-border-btn:hover {
+            box-shadow:
+                0 10px 28px rgba(255,45,117,.38),
+                0 0 22px rgba(0,229,255,.20);
+            filter: brightness(1.08);
+        }
+
+        .nav-link.active {
+            color: #ff4f91;
+            text-shadow: 0 0 12px rgba(255,45,117,.55);
+        }
+
+        .nav-link.active i {
+            filter: drop-shadow(0 0 9px #ff2d75);
+        }
+
+        /* Colorful task/icon blocks */
+        .action-card .bg-rose-500\/10 {
+            background: linear-gradient(135deg, rgba(255,45,117,.25), rgba(255,45,117,.06)) !important;
+        }
+        .action-card .bg-amber-500\/10 {
+            background: linear-gradient(135deg, rgba(255,159,28,.25), rgba(255,159,28,.06)) !important;
+        }
+        .action-card .bg-indigo-500\/10 {
+            background: linear-gradient(135deg, rgba(77,124,255,.28), rgba(155,92,255,.07)) !important;
+        }
+        .action-card .bg-emerald-500\/10 {
+            background: linear-gradient(135deg, rgba(0,230,118,.24), rgba(0,229,255,.06)) !important;
+        }
+        .action-card .bg-slate-800 {
+            background: linear-gradient(135deg, rgba(77,124,255,.16), rgba(155,92,255,.10)) !important;
+        }
+
+        #home-page > .space-y-3:nth-of-type(2) .action-card {
+            position: relative;
+        }
+
+        #home-page > .space-y-3:nth-of-type(2) .action-card:nth-child(1) {
+            border-left: 3px solid #ff2d75;
+        }
+        #home-page > .space-y-3:nth-of-type(2) .action-card:nth-child(2) {
+            border-left: 3px solid #ff9f1c;
+        }
+        #home-page > .space-y-3:nth-of-type(2) .action-card:nth-child(3) {
+            border-left: 3px solid #4d7cff;
+        }
+        #home-page > .space-y-3:nth-of-type(2) .action-card:nth-child(4) {
+            border-left: 3px solid #00e676;
+        }
+
+        #live-payouts-box .action-card {
+            background: linear-gradient(110deg, rgba(0,230,118,.12), rgba(0,229,255,.05), rgba(19,24,38,.75));
+            border-color: rgba(0,230,118,.18);
+        }
+
+        #txn-history .action-card {
+            background: linear-gradient(110deg, rgba(255,45,117,.08), rgba(155,92,255,.07), rgba(19,24,38,.78));
+        }
+
+        @keyframes gradientMove {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        @keyframes colorfulGlow {
+            0%, 100% { box-shadow: 0 0 0 rgba(255,45,117,0); }
+            50% { box-shadow: 0 0 24px rgba(255,45,117,.10); }
+        }
+
+        .hero-wallet-card,
+        .action-card {
+            animation: colorfulGlow 5s ease-in-out infinite;
+        }
+
+        /* Make section headings more vivid */
+        h3 {
+            text-shadow: 0 0 10px rgba(0,229,255,.10);
+        }
+
+        /* Wallet inputs */
+        #gateway, #amt, #num {
+            background: linear-gradient(135deg, rgba(30,38,58,.95), rgba(11,15,27,.95)) !important;
+            border-color: rgba(155,92,255,.18) !important;
+        }
+
+        #gateway:focus, #amt:focus, #num:focus {
+            border-color: rgba(0,229,255,.55) !important;
+            box-shadow: 0 0 0 2px rgba(0,229,255,.08), 0 0 16px rgba(0,229,255,.10);
+        }
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800;900&family=Space+Grotesk:wght@700&display=swap');
         
         :root {
@@ -83,21 +236,155 @@
         .animate-payout {
             animation: slideDownIn 0.5s ease forwards;
         }
-    </style>
+    
+        /* ===== PREMIUM BRAND + MENU ===== */
+        .brand-logo {
+            position: relative;
+            border-radius: 15px;
+            background: linear-gradient(135deg, #ff176f, #9b5cff 55%, #00cfff);
+            box-shadow: 0 0 22px rgba(155,92,255,.28), inset 0 1px 0 rgba(255,255,255,.35);
+            overflow: hidden;
+        }
+
+        .brand-logo::after {
+            content: "";
+            position: absolute;
+            inset: 2px;
+            border-radius: 13px;
+            background: linear-gradient(145deg, rgba(9,12,22,.82), rgba(30,19,48,.70));
+        }
+
+        .brand-logo-ring {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(255,255,255,.32);
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .premium-menu {
+            padding: 6px;
+            border-radius: 22px;
+            background:
+                linear-gradient(135deg, rgba(255,255,255,.08), rgba(255,255,255,.025)),
+                rgba(8,11,20,.94);
+            border: 1px solid rgba(255,255,255,.10);
+            box-shadow:
+                0 -10px 35px rgba(0,0,0,.35),
+                0 0 30px rgba(155,92,255,.08),
+                inset 0 1px 0 rgba(255,255,255,.08);
+            backdrop-filter: blur(24px);
+        }
+
+        .premium-nav-item {
+            position: relative;
+            min-height: 54px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            border-radius: 17px;
+            color: #7f899d;
+            font-size: 8px;
+            font-weight: 900;
+            letter-spacing: .04em;
+            transition: all .25s ease;
+        }
+
+        .premium-nav-item .nav-icon {
+            width: 31px;
+            height: 27px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: all .25s ease;
+        }
+
+        .premium-nav-item.active {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(255,45,117,.20), rgba(155,92,255,.15), rgba(0,207,255,.10));
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.08);
+        }
+
+        .premium-nav-item.active .nav-icon {
+            color: #fff;
+            background: linear-gradient(135deg, #ff176f, #9b5cff 60%, #00cfff);
+            box-shadow: 0 5px 18px rgba(155,92,255,.30), 0 0 12px rgba(255,45,117,.18);
+            transform: translateY(-2px);
+        }
+
+        .premium-nav-item.active::before {
+            content: "";
+            position: absolute;
+            top: -1px;
+            width: 24px;
+            height: 2px;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #ff176f, #ff9f1c, #00cfff);
+            box-shadow: 0 0 10px rgba(0,207,255,.45);
+        }
+
+        .premium-nav-item:active {
+            transform: scale(.94);
+        }
+
+        /* Premium page entrance */
+        .page-content:not(.hidden) {
+            animation: premiumPageIn .35s ease both;
+        }
+
+        @keyframes premiumPageIn {
+            from { opacity: 0; transform: translateY(8px) scale(.99); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Premium headings */
+        #wallet-page > .action-card,
+        #refer-page > .hero-wallet-card,
+        #profile-page > .action-card {
+            background:
+                radial-gradient(circle at 100% 0%, rgba(0,207,255,.12), transparent 35%),
+                radial-gradient(circle at 0% 100%, rgba(255,45,117,.12), transparent 35%),
+                linear-gradient(145deg, rgba(25,31,48,.92), rgba(10,14,25,.92));
+        }
+
+        /* Slightly richer cards */
+        .action-card {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::after {
+            content: "";
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            right: -35px;
+            bottom: -35px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,207,255,.10), transparent 70%);
+            pointer-events: none;
+        }
+
+</style>
 </head>
 <body class="pb-32">
 
     <!-- Header Section -->
     <header class="p-5 flex justify-between items-center max-w-md mx-auto">
         <div class="flex items-center gap-3">
-            <div class="w-11 h-11 action-card flex items-center justify-center border-rose-500/30">
-                <i data-lucide="flame" class="w-6 h-6 text-rose-500"></i>
+            <div class="brand-logo w-11 h-11 flex items-center justify-center">
+                <div class="brand-logo-ring"></div>
+                <i data-lucide="wallet-cards" class="w-5.5 h-5.5 text-white relative z-10"></i>
             </div>
             <div>
-                <h1 style="font-family: 'Space Grotesk';" class="text-base font-extrabold tracking-wider text-white">
-                    FULL CASH <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-500 to-amber-500">MONEY</span>
+                <h1 style="font-family: 'Space Grotesk';" class="text-[15px] font-black tracking-[0.12em] text-white">
+                    FULL CASH <span class="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-400 to-cyan-400">MONEY</span>
                 </h1>
-                <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest"></p>
+                <p class="text-[7px] text-slate-500 font-black uppercase tracking-[0.28em] mt-0.5"></p>
             </div>
         </div>
         <div class="action-card px-3.5 py-1.5 border-rose-500/20">
@@ -311,11 +598,25 @@
     </main>
 
     <!-- Bottom Navigation Bar -->
-    <nav class="fixed bottom-0 left-0 right-0 bottom-nav px-6 py-3.5 flex justify-around items-center z-50">
-        <button onclick="changePage('home-page', this)" class="nav-link active flex flex-col items-center gap-1 text-slate-400"><i data-lucide="layout-grid" class="w-5 h-5"></i><span class="text-[8px] font-bold">Home</span></button>
-        <button onclick="changePage('refer-page', this)" class="nav-link flex flex-col items-center gap-1 text-slate-400"><i data-lucide="share-2" class="w-5 h-5"></i><span class="text-[8px] font-bold">Refer</span></button>
-        <button onclick="changePage('wallet-page', this)" class="nav-link flex flex-col items-center gap-1 text-slate-400"><i data-lucide="wallet" class="w-5 h-5"></i><span class="text-[8px] font-bold">Wallet</span></button>
-        <button onclick="changePage('profile-page', this)" class="nav-link flex flex-col items-center gap-1 text-slate-400"><i data-lucide="user" class="w-5 h-5"></i><span class="text-[8px] font-bold">Account</span></button>
+    <nav class="fixed bottom-0 left-0 right-0 bottom-nav px-3 py-2.5 z-50">
+        <div class="premium-menu max-w-md mx-auto grid grid-cols-4 gap-1">
+            <button onclick="changePage('home-page', this)" class="nav-link active premium-nav-item">
+                <span class="nav-icon"><i data-lucide="layout-grid" class="w-5 h-5"></i></span>
+                <span>Home</span>
+            </button>
+            <button onclick="changePage('refer-page', this)" class="nav-link premium-nav-item">
+                <span class="nav-icon"><i data-lucide="gift" class="w-5 h-5"></i></span>
+                <span>Refer</span>
+            </button>
+            <button onclick="changePage('wallet-page', this)" class="nav-link premium-nav-item">
+                <span class="nav-icon"><i data-lucide="wallet-cards" class="w-5 h-5"></i></span>
+                <span>Wallet</span>
+            </button>
+            <button onclick="changePage('profile-page', this)" class="nav-link premium-nav-item">
+                <span class="nav-icon"><i data-lucide="circle-user-round" class="w-5 h-5"></i></span>
+                <span>Account</span>
+            </button>
+        </div>
     </nav>
 
     <script type="module">
@@ -377,6 +678,7 @@
             });
 
             loadHistory();
+            startWithdrawalAutoApproval();
             startFakeLivePayouts();
         }
 
@@ -570,19 +872,65 @@
             if(refCount < 15) return tg.showAlert(`উইথড্র সফল করতে অন্তত ১৫টি রেফার প্রয়োজন! আপনার বর্তমান রেফার: ${refCount}/15`);
             
             await updateDoc(doc(db, "users", uid), { balance: increment(-amt) });
+
             await addDoc(collection(db, "withdrawals"), { 
                 uid, 
                 amount: amt, 
                 number: num, 
                 method: document.getElementById('gateway').value, 
                 status: "Pending", 
-                time: serverTimestamp() 
+                time: serverTimestamp(),
+                autoApproveAt: new Date(Date.now() + 48 * 60 * 60 * 1000)
             });
 
-            tg.showAlert("উইথড্র রিকোয়েস্ট জমা হয়েছে!");
+            tg.showAlert("উইথড্র রিকোয়েস্ট জমা হয়েছে! ৪৮ ঘণ্টা পর অটোমেটিক Approved হবে।");
             document.getElementById('amt').value = '';
             document.getElementById('num').value = '';
         };
+
+        // ===== WITHDRAWAL AUTO APPROVAL =====
+        // Existing/legacy Pending requests are approved immediately.
+        // New requests are given autoApproveAt = +48 hours and are approved
+        // automatically when the app checks again after that time.
+        async function autoApproveWithdrawals() {
+            try {
+                const allWithdrawals = await getDocs(collection(db, "withdrawals"));
+                const nowMs = Date.now();
+
+                const jobs = [];
+                allWithdrawals.forEach((snap) => {
+                    const w = snap.data();
+
+                    if (w.status !== "Pending") return;
+
+                    const approveAtMs = w.autoApproveAt?.toMillis
+                        ? w.autoApproveAt.toMillis()
+                        : (w.autoApproveAt?.seconds ? w.autoApproveAt.seconds * 1000 : 0);
+
+                    // Legacy requests have no autoApproveAt, so approve them now.
+                    // New requests are approved only after 48 hours.
+                    if (!approveAtMs || nowMs >= approveAtMs) {
+                        jobs.push(
+                            updateDoc(doc(db, "withdrawals", snap.id), {
+                                status: "Approved",
+                                approvedAt: serverTimestamp()
+                            })
+                        );
+                    }
+                });
+
+                await Promise.allSettled(jobs);
+            } catch (err) {
+                console.error("Withdrawal auto-approval error:", err);
+            }
+        }
+
+        // Check when the app starts.
+        // Also check every minute while the app is open.
+        async function startWithdrawalAutoApproval() {
+            await autoApproveWithdrawals();
+            setInterval(autoApproveWithdrawals, 60 * 1000);
+        }
 
         // Real Withdrawal History
         function loadHistory() {
@@ -708,4 +1056,3 @@
     </script>
 </body>
 </html>
-
