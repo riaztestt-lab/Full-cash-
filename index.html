@@ -627,13 +627,13 @@
                 <p class="text-[9px] font-black uppercase tracking-[0.22em] text-cyan-300">Invite • Earn • Grow</p>
                 <h2 class="text-xl font-black mt-1">Refer & Earn ৳100</h2>
                 <p class="text-[10px] text-slate-400 mt-2 leading-5">
-                    বন্ধুদের আমন্ত্রণ করুন এবং তারা সত্যিকারেরভাবে কাজ শুরু করলে আপনার রেফারটি Valid হবে।
+                    বন্ধুদের আমন্ত্রণ করুন। নতুন user আপনার referral link দিয়ে join করলেই referral count এবং ৳100 bonus যোগ হবে।
                 </p>
 
                 <div class="grid grid-cols-2 gap-3 mt-6">
                     <div class="refer-stat">
                         <p id="stat-ref" class="text-2xl font-black text-white">0</p>
-                        <p class="text-[8px] text-slate-500 uppercase font-black mt-1">Valid Referrals</p>
+                        <p class="text-[8px] text-slate-500 uppercase font-black mt-1">Total Referrals</p>
                     </div>
                     <div class="refer-stat">
                         <p id="stat-earn" class="text-2xl font-black text-amber-400">৳0</p>
@@ -814,10 +814,19 @@
                     joinedAt: serverTimestamp() 
                 });
 
-                // Referral is NOT credited immediately.
-                // It becomes valid only after the referred user completes a real earning action.
+                // Referral count AND bonus are added immediately when a new
+                // user joins through a valid referral link.
                 if(refBy && refBy !== uid) {
                     await updateDoc(userRef, { referredBy: refBy });
+
+                    const referrerRef = doc(db, "users", refBy);
+                    const referrerSnap = await getDoc(referrerRef);
+                    if(referrerSnap.exists()) {
+                        await updateDoc(referrerRef, {
+                            totalRefer: increment(1),
+                            balance: increment(100)
+                        });
+                    }
                 }
             }
 
@@ -900,33 +909,10 @@
             lucide.createIcons();
         };
 
-        // Credit a referral only after the referred user performs a real earning action.
+        // Referral bonus is already credited immediately when the new user joins.
+        // This function is kept as a safe no-op for existing task/ad flows.
         async function creditReferralOnce() {
-            if (!userData?.referredBy || userData.referralCredited) return;
-
-            const currentUserRef = doc(db, "users", uid);
-            const referrerRef = doc(db, "users", userData.referredBy);
-
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const currentSnap = await transaction.get(currentUserRef);
-                    if (!currentSnap.exists()) return;
-
-                    const current = currentSnap.data();
-                    if (!current.referredBy || current.referralCredited) return;
-
-                    const referrerSnap = await transaction.get(referrerRef);
-                    if (!referrerSnap.exists()) return;
-
-                    transaction.update(currentUserRef, { referralCredited: true });
-                    transaction.update(referrerRef, {
-                        balance: increment(100),
-                        totalRefer: increment(1)
-                    });
-                });
-            } catch (err) {
-                console.error("Referral credit error:", err);
-            }
+            return;
         }
 
         window.handleTask = (id, link) => {
@@ -1181,4 +1167,4 @@
         init();
     </script>
 </body>
-    </html>
+                                                     </html>
